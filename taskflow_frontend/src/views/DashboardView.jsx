@@ -1,4 +1,4 @@
-import { useTasks } from '../hooks/useTasks';
+import { useTasks } from '../hooks/useTasks.jsx';
 import { useTaskModal } from '../hooks/useTaskModal';
 import Navbar from '../components/Navbar';
 import TaskCard from '../components/TaskCard';
