@@ -6,10 +6,18 @@ const STATUS_OPTIONS = [
   { value: 'completed', label: 'Completed' },
 ];
 
+const PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
+
 export default function TaskModal({ isOpen, onClose, onSave, task }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('pending');
+  const [priority, setPriority] = useState('medium');
+  const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -17,10 +25,14 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
       setTitle(task.title || '');
       setDescription(task.description || '');
       setStatus(task.status || 'pending');
+      setPriority(task.priority || 'medium');
+      setDueDate(task.due_date || '');
     } else {
       setTitle('');
       setDescription('');
       setStatus('pending');
+      setPriority('medium');
+      setDueDate('');
     }
     setError('');
   }, [task, isOpen]);
@@ -33,7 +45,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
       setError('Title is required.');
       return;
     }
-    onSave({ title: title.trim(), description: description.trim(), status });
+    onSave({ title: title.trim(), description: description.trim(), status, priority, due_date: dueDate || null });
   }
 
   return (
@@ -71,21 +83,48 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
             />
           </div>
 
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Priority
+              </label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {PRIORITY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Status
+              Due Date <span className="text-gray-400 font-normal">(optional)</span>
             </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="flex gap-3 pt-2">
