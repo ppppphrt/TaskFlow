@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { fetchTasks, createTask, updateTask, deleteTask } from '../services/api';
 
+const PRIORITY_RANK = { high: 3, medium: 2, low: 1 };
+
 export function useTasks() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -73,12 +77,40 @@ export function useTasks() {
     );
   }
 
-  const filteredTasks = filter === 'all' ? tasks : tasks.filter((t) => t.status === filter);
+  const filtered = filter === 'all' ? tasks : tasks.filter((t) => t.status === filter);
+
+  const filteredTasks = [...filtered].sort((a, b) => {
+    let valA, valB;
+
+    if (sortBy === 'priority') {
+      valA = PRIORITY_RANK[a.priority] ?? 2;
+      valB = PRIORITY_RANK[b.priority] ?? 2;
+    } else if (sortBy === 'due_date') {
+      // nulls always last regardless of direction
+      if (!a.due_date && !b.due_date) return 0;
+      if (!a.due_date) return 1;
+      if (!b.due_date) return -1;
+      valA = new Date(a.due_date).getTime();
+      valB = new Date(b.due_date).getTime();
+    } else {
+      // created_at
+      valA = new Date(a.created_at).getTime();
+      valB = new Date(b.created_at).getTime();
+    }
+
+    return sortOrder === 'asc' ? valA - valB : valB - valA;
+  });
 
   const taskCounts = tasks.reduce((acc, t) => {
     acc[t.status] = (acc[t.status] || 0) + 1;
     return acc;
   }, {});
 
-  return { tasks, filteredTasks, taskCounts, filter, setFilter, isLoading, saveTask, removeTask };
+  return {
+    tasks, filteredTasks, taskCounts,
+    filter, setFilter,
+    sortBy, setSortBy,
+    sortOrder, setSortOrder,
+    isLoading, saveTask, removeTask,
+  };
 }

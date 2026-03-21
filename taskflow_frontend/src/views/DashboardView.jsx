@@ -4,10 +4,11 @@ import Navbar from '../components/Navbar';
 import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
 import TaskFilterBar from '../components/TaskFilterBar';
+import TaskSortBar from '../components/TaskSortBar';
 import EmptyState from '../components/EmptyState';
 
 export default function DashboardView() {
-  const { filteredTasks, taskCounts, filter, setFilter, isLoading, saveTask, removeTask } = useTasks();
+  const { filteredTasks, taskCounts, filter, setFilter, sortBy, setSortBy, sortOrder, setSortOrder, isLoading, saveTask, removeTask } = useTasks();
   const { isModalOpen, editingTask, openCreateModal, openEditModal, closeModal } = useTaskModal();
 
   async function handleSave(data) {
@@ -30,8 +31,9 @@ export default function DashboardView() {
           </button>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <TaskFilterBar activeFilter={filter} onFilterChange={setFilter} counts={taskCounts} />
+          <TaskSortBar sortBy={sortBy} onSortByChange={setSortBy} sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
         </div>
 
         {isLoading ? (
