@@ -5,10 +5,11 @@ import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
 import TaskFilterBar from '../components/TaskFilterBar';
 import TaskSortBar from '../components/TaskSortBar';
+import StatsBar from '../components/StatsBar';
 import EmptyState from '../components/EmptyState';
 
 export default function DashboardView() {
-  const { filteredTasks, taskCounts, filter, setFilter, sortBy, setSortBy, sortOrder, setSortOrder, isLoading, saveTask, removeTask } = useTasks();
+  const { filteredTasks, taskCounts, stats, filter, setFilter, sortBy, setSortBy, sortOrder, setSortOrder, isLoading, saveTask, removeTask } = useTasks();
   const { isModalOpen, editingTask, openCreateModal, openEditModal, closeModal } = useTaskModal();
 
   async function handleSave(data) {
@@ -30,6 +31,8 @@ export default function DashboardView() {
             + New Task
           </button>
         </div>
+
+        <StatsBar stats={stats} />
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <TaskFilterBar activeFilter={filter} onFilterChange={setFilter} counts={taskCounts} />

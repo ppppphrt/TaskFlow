@@ -106,8 +106,16 @@ export function useTasks() {
     return acc;
   }, {});
 
+  const today = new Date().toISOString().split('T')[0];
+  const stats = {
+    total: tasks.length,
+    completed: tasks.filter((t) => t.status === 'completed').length,
+    in_progress: tasks.filter((t) => t.status === 'in_progress').length,
+    overdue: tasks.filter((t) => t.due_date && t.due_date < today && t.status !== 'completed').length,
+  };
+
   return {
-    tasks, filteredTasks, taskCounts,
+    tasks, filteredTasks, taskCounts, stats,
     filter, setFilter,
     sortBy, setSortBy,
     sortOrder, setSortOrder,
