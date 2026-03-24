@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { logout as logoutApi } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -35,7 +36,8 @@ export function AuthProvider({ children }) {
     setUser(decoded ? { username: decoded.username || String(decoded.user_id) } : null);
   }
 
-  function logout() {
+  async function logout() {
+    try { await logoutApi(); } catch { /* proceed even if API fails */ }
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     setTokens({ access: null, refresh: null });

@@ -1,19 +1,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { logout as logoutApi } from '../services/api';
 
-export default function Navbar() {
+export default function Navbar({ onAddTask }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogout() {
-    try {
-      await logoutApi();
-    } catch {
-      // proceed even if API call fails
-    }
-    logout();
+    await logout();
     navigate('/login');
   }
 
@@ -28,6 +22,14 @@ export default function Navbar() {
             <span className="text-sm text-blue-100">
               Hello, <span className="font-semibold">{user.username}</span>
             </span>
+            {onAddTask && (
+              <button
+                onClick={onAddTask}
+                className="hidden sm:block bg-white text-primary text-sm font-medium px-4 py-1.5 rounded-md hover:bg-blue-50 transition"
+              >
+                + Add Task
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="bg-white text-primary text-sm font-medium px-4 py-1.5 rounded-md hover:bg-blue-50 transition"
