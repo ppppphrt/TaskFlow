@@ -1,4 +1,6 @@
 import React from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const STATUS_STYLES = {
   pending: { badge: 'bg-rose-100 text-rose-700', label: 'Pending' },
@@ -23,13 +25,42 @@ function isOverdue(dateStr) {
   return new Date(dateStr) < new Date(new Date().toDateString());
 }
 
-export default function TaskCard({ task, onEdit, onDelete }) {
+export default function TaskCard({ task, onEdit, onDelete, draggable = false }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    disabled: !draggable,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
   const statusStyle = STATUS_STYLES[task.status] || STATUS_STYLES.pending;
   const priorityStyle = PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.medium;
   const overdue = task.status !== 'completed' && isOverdue(task.due_date);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-md transition">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className="relative bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up"
+    >
+      {draggable && (
+        <div
+          {...listeners}
+          className="absolute top-3 right-3 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition"
+          title="Drag to move"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/>
+            <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+            <circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/>
+          </svg>
+        </div>
+      )}
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-base font-semibold text-gray-800 leading-tight">
           {task.title}

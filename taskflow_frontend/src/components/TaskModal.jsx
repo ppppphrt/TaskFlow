@@ -49,8 +49,8 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-scale-in">
         <h2 className="text-lg font-bold text-gray-800 mb-4">
           {task ? 'Edit Task' : 'New Task'}
         </h2>

@@ -45,6 +45,18 @@ export function useTasks() {
     }
   }
 
+  async function moveTask(id, newStatus) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t))
+    );
+    try {
+      await updateTask(id, { status: newStatus });
+    } catch {
+      toast.error('Failed to update task status.');
+      loadTasks();
+    }
+  }
+
   function removeTask(id) {
     const toastId = toast(
       <div>
@@ -119,6 +131,6 @@ export function useTasks() {
     filter, setFilter,
     sortBy, setSortBy,
     sortOrder, setSortOrder,
-    isLoading, saveTask, removeTask,
+    isLoading, saveTask, removeTask, moveTask,
   };
 }

@@ -1,15 +1,13 @@
 import { useTasks } from '../hooks/useTasks.jsx';
 import { useTaskModal } from '../hooks/useTaskModal';
 import Navbar from '../components/Navbar';
-import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
-import TaskFilterBar from '../components/TaskFilterBar';
 import TaskSortBar from '../components/TaskSortBar';
 import StatsBar from '../components/StatsBar';
-import EmptyState from '../components/EmptyState';
+import KanbanBoard from '../components/KanbanBoard';
 
 export default function DashboardView() {
-  const { filteredTasks, taskCounts, stats, filter, setFilter, sortBy, setSortBy, sortOrder, setSortOrder, isLoading, saveTask, removeTask } = useTasks();
+  const { filteredTasks, stats, sortBy, setSortBy, sortOrder, setSortOrder, isLoading, saveTask, removeTask, moveTask } = useTasks();
   const { isModalOpen, editingTask, openCreateModal, openEditModal, closeModal } = useTaskModal();
 
   async function handleSave(data) {
@@ -34,34 +32,27 @@ export default function DashboardView() {
 
         <StatsBar stats={stats} />
 
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <TaskFilterBar activeFilter={filter} onFilterChange={setFilter} counts={taskCounts} />
+        <div className="mb-4 flex justify-end">
           <TaskSortBar sortBy={sortBy} onSortByChange={setSortBy} sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse">
+              <div key={n} className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse h-40">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
                 <div className="h-3 bg-gray-100 rounded w-full mb-2" />
                 <div className="h-3 bg-gray-100 rounded w-5/6" />
               </div>
             ))}
           </div>
-        ) : filteredTasks.length === 0 ? (
-          <EmptyState onCreateTask={openCreateModal} isFiltered={filter !== 'all'} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onEdit={openEditModal}
-                onDelete={removeTask}
-              />
-            ))}
-          </div>
+          <KanbanBoard
+            tasks={filteredTasks}
+            onEdit={openEditModal}
+            onDelete={removeTask}
+            onMove={moveTask}
+          />
         )}
       </main>
 
