@@ -8,6 +8,9 @@ import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
 import AuthView from './views/AuthView';
 import DashboardView from './views/DashboardView';
+import CalendarView from './views/CalendarView';
+import ProfileView from './views/ProfileView';
+import NotFoundView from './views/NotFoundView';
 
 export default function App() {
   return (
@@ -24,7 +27,11 @@ export default function App() {
 
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<DashboardView />} />
+            <Route path="/calendar" element={<CalendarView />} />
+            <Route path="/profile" element={<ProfileView />} />
           </Route>
+
+          <Route path="*" element={<NotFoundView />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

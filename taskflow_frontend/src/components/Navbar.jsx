@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onAddTask }) {
@@ -11,17 +11,32 @@ export default function Navbar({ onAddTask }) {
     navigate('/login');
   }
 
+  const navLinkClass = ({ isActive }) =>
+    `text-sm font-medium transition ${
+      isActive ? 'text-white' : 'text-blue-200 hover:text-white'
+    }`;
+
   return (
     <nav className="bg-primary text-white px-6 py-4 flex items-center justify-between shadow-md">
-      <Link to="/dashboard" className="text-xl font-bold tracking-tight">
-        TaskFlow
-      </Link>
+      <div className="flex items-center gap-6">
+        <Link to="/dashboard" className="text-xl font-bold tracking-tight">
+          TaskFlow
+        </Link>
+        {user && (
+          <div className="hidden sm:flex items-center gap-4">
+            <NavLink to="/dashboard" className={navLinkClass}>
+              Dashboard
+            </NavLink>
+            <NavLink to="/calendar" className={navLinkClass}>
+              Calendar
+            </NavLink>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center gap-4">
         {user ? (
           <>
-            <span className="text-sm text-blue-100">
-              Hello, <span className="font-semibold">{user.username}</span>
-            </span>
             {onAddTask && (
               <button
                 onClick={onAddTask}
@@ -30,6 +45,12 @@ export default function Navbar({ onAddTask }) {
                 + Add Task
               </button>
             )}
+            <Link
+              to="/profile"
+              className="text-sm text-blue-100 hover:text-white transition"
+            >
+              Hello, <span className="font-semibold">{user.username}</span>
+            </Link>
             <button
               onClick={handleLogout}
               className="bg-white text-primary text-sm font-medium px-4 py-1.5 rounded-md hover:bg-blue-50 transition"
