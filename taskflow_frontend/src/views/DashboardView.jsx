@@ -1,13 +1,30 @@
+import { useState } from 'react';
 import { useTasks } from '../hooks/useTasks.jsx';
 import { useTaskModal } from '../hooks/useTaskModal';
 import Navbar from '../components/Navbar';
 import TaskModal from '../components/TaskModal';
+import TaskFilterBar from '../components/TaskFilterBar';
 import TaskSortBar from '../components/TaskSortBar';
 import StatsBar from '../components/StatsBar';
 import KanbanBoard from '../components/KanbanBoard';
+import ListView from '../components/ListView';
+
+const VIEW_MODES = [
+  { value: 'kanban', label: 'Kanban' },
+  { value: 'list', label: 'List' },
+];
 
 export default function DashboardView() {
-  const { filteredTasks, stats, sortBy, setSortBy, sortOrder, setSortOrder, isLoading, saveTask, removeTask, moveTask } = useTasks();
+  const [viewMode, setViewMode] = useState('kanban');
+
+  const {
+    filteredTasks, taskCounts, stats,
+    filter, setFilter,
+    sortBy, setSortBy,
+    sortOrder, setSortOrder,
+    isLoading, saveTask, removeTask, moveTask,
+  } = useTasks();
+
   const { isModalOpen, editingTask, openCreateModal, openEditModal, closeModal } = useTaskModal();
 
   async function handleSave(data) {
@@ -32,8 +49,36 @@ export default function DashboardView() {
 
         <StatsBar stats={stats} />
 
-        <div className="mb-4 flex justify-end">
-          <TaskSortBar sortBy={sortBy} onSortByChange={setSortBy} sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <TaskFilterBar
+            activeFilter={filter}
+            onFilterChange={setFilter}
+            counts={taskCounts}
+          />
+
+          <div className="flex items-center gap-3">
+            <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+              {VIEW_MODES.map((mode) => (
+                <button
+                  key={mode.value}
+                  onClick={() => setViewMode(mode.value)}
+                  className={`px-3 py-1.5 text-sm font-medium transition ${
+                    viewMode === mode.value
+                      ? 'bg-primary text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+            <TaskSortBar
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              sortOrder={sortOrder}
+              onSortOrderChange={setSortOrder}
+            />
+          </div>
         </div>
 
         {isLoading ? (
@@ -46,12 +91,18 @@ export default function DashboardView() {
               </div>
             ))}
           </div>
-        ) : (
+        ) : viewMode === 'kanban' ? (
           <KanbanBoard
             tasks={filteredTasks}
             onEdit={openEditModal}
             onDelete={removeTask}
             onMove={moveTask}
+          />
+        ) : (
+          <ListView
+            tasks={filteredTasks}
+            onEdit={openEditModal}
+            onDelete={removeTask}
           />
         )}
       </main>
