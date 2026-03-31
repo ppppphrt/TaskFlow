@@ -40,10 +40,21 @@ export const logout = () => {
   return api.post('/api/auth/logout/', { refresh });
 };
 
+// Profile
+export const getProfile = () => api.get('/api/auth/profile/');
+export const updateProfile = (data) => api.patch('/api/auth/profile/', data);
+export const changePassword = (data) => api.post('/api/auth/change-password/', data);
+
 // Tasks
 export const fetchTasks = () => api.get('/api/tasks/');
 export const createTask = (data) => api.post('/api/tasks/', data);
 export const updateTask = (id, data) => api.patch(`/api/tasks/${id}/`, data);
 export const deleteTask = (id) => api.delete(`/api/tasks/${id}/`);
+
+// Subtasks
+export const fetchSubtasks = (taskId) => api.get(`/api/tasks/${taskId}/subtasks/`);
+export const createSubtask = (taskId, data) => api.post(`/api/tasks/${taskId}/subtasks/`, data);
+export const updateSubtask = (subtaskId, data) => api.patch(`/api/subtasks/${subtaskId}/`, data);
+export const deleteSubtask = (subtaskId) => api.delete(`/api/subtasks/${subtaskId}/`);
 
 export default api;

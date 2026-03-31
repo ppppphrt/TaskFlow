@@ -85,6 +85,11 @@ export default function TaskCard({ task, onEdit, onDelete, draggable = false }) 
             {overdue ? '⚠ ' : ''}Due {formatDate(task.due_date)}
           </span>
         )}
+        {task.subtask_count > 0 && (
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+            {task.completed_subtask_count}/{task.subtask_count} subtasks
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-2 mt-auto pt-2 border-t border-gray-100">

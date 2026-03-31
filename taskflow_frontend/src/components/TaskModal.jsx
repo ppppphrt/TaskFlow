@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useSubtasks } from '../hooks/useSubtasks';
+import SubtaskList from './SubtaskList';
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending' },
@@ -19,6 +21,9 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
   const [priority, setPriority] = useState('medium');
   const [dueDate, setDueDate] = useState('');
   const [error, setError] = useState('');
+
+  const { subtasks, isLoading: subtasksLoading, addSubtask, toggleSubtask, removeSubtask } =
+    useSubtasks(task?.id ?? null);
 
   useEffect(() => {
     if (task) {
@@ -45,12 +50,18 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
       setError('Title is required.');
       return;
     }
-    onSave({ title: title.trim(), description: description.trim(), status, priority, due_date: dueDate || null });
+    onSave({
+      title: title.trim(),
+      description: description.trim(),
+      status,
+      priority,
+      due_date: dueDate || null,
+    });
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-scale-in">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-scale-in max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-bold text-gray-800 mb-4">
           {task ? 'Edit Task' : 'New Task'}
         </h2>
@@ -85,9 +96,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
@@ -100,9 +109,7 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
             </div>
 
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Priority
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
@@ -126,6 +133,22 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
+
+          {task ? (
+            <div className="border-t border-gray-100 pt-4">
+              <SubtaskList
+                subtasks={subtasks}
+                isLoading={subtasksLoading}
+                onAdd={addSubtask}
+                onToggle={toggleSubtask}
+                onRemove={removeSubtask}
+              />
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 italic">
+              Save the task first to add subtasks.
+            </p>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button
