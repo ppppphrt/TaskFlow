@@ -5,7 +5,6 @@ import Navbar from '../components/Navbar';
 import TaskModal from '../components/TaskModal';
 import TaskFilterBar from '../components/TaskFilterBar';
 import TaskSortBar from '../components/TaskSortBar';
-import StatsBar from '../components/StatsBar';
 import KanbanBoard from '../components/KanbanBoard';
 import ListView from '../components/ListView';
 
@@ -18,7 +17,7 @@ export default function DashboardView() {
   const [viewMode, setViewMode] = useState('kanban');
 
   const {
-    filteredTasks, taskCounts, stats,
+    filteredTasks, taskCounts,
     filter, setFilter,
     sortBy, setSortBy,
     sortOrder, setSortOrder,
@@ -46,8 +45,6 @@ export default function DashboardView() {
             + New Task
           </button>
         </div>
-
-        <StatsBar stats={stats} />
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <TaskFilterBar
