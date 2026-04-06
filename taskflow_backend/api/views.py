@@ -8,14 +8,22 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-from .models import Task, Subtask
+from .models import Task, Subtask, Phase
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from .serializers import (
     UserRegistrationSerializer,
+    CustomTokenObtainPairSerializer,
     TaskSerializer,
     SubtaskSerializer,
+    PhaseSerializer,
     UserProfileSerializer,
     ChangePasswordSerializer,
 )
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 from .permissions import IsOwner
 
 
@@ -59,6 +67,28 @@ class ChangePasswordView(APIView):
         request.user.set_password(serializer.validated_data['new_password'])
         request.user.save()
         return Response({'detail': 'Password changed successfully.'}, status=200)
+
+
+class PhaseListCreateView(generics.ListCreateAPIView):
+    """List all phases for the authenticated user or create a new phase."""
+    serializer_class = PhaseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Phase.objects.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        max_order = Phase.objects.filter(owner=self.request.user).count()
+        serializer.save(owner=self.request.user, order=max_order)
+
+
+class PhaseRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update, or delete a phase owned by the authenticated user."""
+    serializer_class = PhaseSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        return Phase.objects.filter(owner=self.request.user)
 
 
 class TaskListCreateView(generics.ListCreateAPIView):

@@ -45,14 +45,20 @@ export function useTasks() {
     }
   }
 
-  async function moveTask(id, newStatus) {
+  async function moveTask(id, phaseId) {
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t))
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        // optimistic: find the phase object from current tasks' phase data isn't available
+        // so we just update phase.id — the server will return full phase on next load
+        return { ...t, phase: t.phase ? { ...t.phase, id: phaseId } : { id: phaseId } };
+      })
     );
     try {
-      await updateTask(id, { status: newStatus });
+      const res = await updateTask(id, { phase_id: phaseId });
+      setTasks((prev) => prev.map((t) => (t.id === id ? res.data : t)));
     } catch {
-      toast.error('Failed to update task status.');
+      toast.error('Failed to update task phase.');
       loadTasks();
     }
   }
@@ -89,7 +95,8 @@ export function useTasks() {
     );
   }
 
-  const filtered = filter === 'all' ? tasks : tasks.filter((t) => t.status === filter);
+  // filter === 'all' or a phase id (number)
+  const filtered = filter === 'all' ? tasks : tasks.filter((t) => t.phase?.id === filter);
 
   const filteredTasks = [...filtered].sort((a, b) => {
     let valA, valB;
@@ -98,14 +105,12 @@ export function useTasks() {
       valA = PRIORITY_RANK[a.priority] ?? 2;
       valB = PRIORITY_RANK[b.priority] ?? 2;
     } else if (sortBy === 'due_date') {
-      // nulls always last regardless of direction
       if (!a.due_date && !b.due_date) return 0;
       if (!a.due_date) return 1;
       if (!b.due_date) return -1;
       valA = new Date(a.due_date).getTime();
       valB = new Date(b.due_date).getTime();
     } else {
-      // created_at
       valA = new Date(a.created_at).getTime();
       valB = new Date(b.created_at).getTime();
     }
@@ -113,17 +118,19 @@ export function useTasks() {
     return sortOrder === 'asc' ? valA - valB : valB - valA;
   });
 
+  // taskCounts keyed by phase.id
   const taskCounts = tasks.reduce((acc, t) => {
-    acc[t.status] = (acc[t.status] || 0) + 1;
+    if (t.phase?.id) {
+      acc[t.phase.id] = (acc[t.phase.id] || 0) + 1;
+    }
     return acc;
   }, {});
 
   const today = new Date().toISOString().split('T')[0];
   const stats = {
     total: tasks.length,
-    completed: tasks.filter((t) => t.status === 'completed').length,
-    in_progress: tasks.filter((t) => t.status === 'in_progress').length,
-    overdue: tasks.filter((t) => t.due_date && t.due_date < today && t.status !== 'completed').length,
+    completed: tasks.filter((t) => t.phase?.is_terminal).length,
+    overdue: tasks.filter((t) => t.due_date && t.due_date < today && !t.phase?.is_terminal).length,
   };
 
   return {

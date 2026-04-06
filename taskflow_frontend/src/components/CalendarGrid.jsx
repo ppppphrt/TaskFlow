@@ -7,13 +7,12 @@ export default function CalendarGrid({ calendarDays, onEditTask }) {
     <div>
       <div className="grid grid-cols-7 mb-1">
         {WEEK_DAYS.map((d) => (
-          <div key={d} className="text-center text-xs font-semibold text-gray-400 py-2">
+          <div key={d} className="text-center text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 py-2">
             {d}
           </div>
         ))}
       </div>
-
-      <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-xl overflow-hidden border border-gray-200">
+      <div className="grid grid-cols-7 gap-px bg-outline-variant/20 rounded-xl overflow-hidden border border-outline-variant/20">
         {calendarDays.map((cell, idx) =>
           cell ? (
             <CalendarDayCell
@@ -24,7 +23,7 @@ export default function CalendarGrid({ calendarDays, onEditTask }) {
               onEditTask={onEditTask}
             />
           ) : (
-            <div key={`empty-${idx}`} className="bg-gray-50 min-h-[80px]" />
+            <div key={`empty-${idx}`} className="bg-surface-container-low/50 min-h-[88px]" />
           )
         )}
       </div>

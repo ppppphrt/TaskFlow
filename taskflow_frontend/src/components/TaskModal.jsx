@@ -2,25 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useSubtasks } from '../hooks/useSubtasks';
 import SubtaskList from './SubtaskList';
 
-const STATUS_OPTIONS = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'completed', label: 'Completed' },
-];
-
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low' },
+  { value: 'low',    label: 'Low' },
   { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
+  { value: 'high',   label: 'High' },
 ];
 
-export default function TaskModal({ isOpen, onClose, onSave, task }) {
-  const [title, setTitle] = useState('');
+export default function TaskModal({ isOpen, onClose, onSave, task, phases = [] }) {
+  const [title, setTitle]       = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('pending');
+  const [phaseId, setPhaseId]   = useState(null);
   const [priority, setPriority] = useState('medium');
-  const [dueDate, setDueDate] = useState('');
-  const [error, setError] = useState('');
+  const [dueDate, setDueDate]   = useState('');
+  const [error, setError]       = useState('');
 
   const { subtasks, isLoading: subtasksLoading, addSubtask, toggleSubtask, removeSubtask } =
     useSubtasks(task?.id ?? null);
@@ -29,60 +23,64 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
     if (task) {
       setTitle(task.title || '');
       setDescription(task.description || '');
-      setStatus(task.status || 'pending');
+      setPhaseId(task.phase?.id ?? (phases[0]?.id ?? null));
       setPriority(task.priority || 'medium');
       setDueDate(task.due_date || '');
     } else {
       setTitle('');
       setDescription('');
-      setStatus('pending');
+      setPhaseId(phases[0]?.id ?? null);
       setPriority('medium');
       setDueDate('');
     }
     setError('');
-  }, [task, isOpen]);
+  }, [task, isOpen, phases]);
 
   if (!isOpen) return null;
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!title.trim()) {
-      setError('Title is required.');
-      return;
-    }
+    if (!title.trim()) { setError('Title is required.'); return; }
     onSave({
       title: title.trim(),
       description: description.trim(),
-      status,
+      phase_id: phaseId,
       priority,
       due_date: dueDate || null,
     });
   }
 
+  const fieldClass = 'w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40 transition';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 animate-scale-in max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">
-          {task ? 'Edit Task' : 'New Task'}
-        </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 animate-fade-in">
+      <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-scale-in max-h-[90vh] overflow-y-auto border border-outline-variant/10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-black tracking-tight text-on-surface">
+            {task ? 'Edit Task' : 'New Task'}
+          </h2>
+          <button onClick={onClose} className="material-symbols-outlined text-on-surface-variant hover:text-on-surface transition-colors">
+            close
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Title <span className="text-danger">*</span>
+            <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
+              Title <span className="text-error">*</span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter task title"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className={fieldClass}
             />
-            {error && <p className="text-danger text-xs mt-1">{error}</p>}
+            {error && <p className="text-error text-xs mt-1">{error}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
               Description
             </label>
             <textarea
@@ -90,31 +88,26 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description"
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className={`${fieldClass} resize-none`}
             />
           </div>
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Phase</label>
               <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                value={phaseId ?? ''}
+                onChange={(e) => setPhaseId(Number(e.target.value))}
+                className={fieldClass}
               >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                {phases.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </div>
-
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
+              <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Priority</label>
+              <select value={priority} onChange={(e) => setPriority(e.target.value)} className={fieldClass}>
                 {PRIORITY_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
@@ -123,19 +116,14 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Due Date <span className="text-gray-400 font-normal">(optional)</span>
+            <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">
+              Due Date <span className="text-on-surface-variant/40 normal-case font-normal">(optional)</span>
             </label>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={fieldClass} />
           </div>
 
           {task ? (
-            <div className="border-t border-gray-100 pt-4">
+            <div className="border-t border-outline-variant/20 pt-4">
               <SubtaskList
                 subtasks={subtasks}
                 isLoading={subtasksLoading}
@@ -145,22 +133,20 @@ export default function TaskModal({ isOpen, onClose, onSave, task }) {
               />
             </div>
           ) : (
-            <p className="text-xs text-gray-400 italic">
-              Save the task first to add subtasks.
-            </p>
+            <p className="text-xs text-on-surface-variant/50 italic">Save the task first to add subtasks.</p>
           )}
 
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50 transition"
+              className="flex-1 border border-outline-variant text-on-surface-variant text-sm font-semibold py-2.5 rounded-xl hover:bg-surface-container-low transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 bg-primary text-white text-sm font-medium py-2 rounded-lg hover:bg-blue-700 transition"
+              className="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary text-sm font-bold py-2.5 rounded-xl active:scale-95 transition-transform"
             >
               {task ? 'Save Changes' : 'Create Task'}
             </button>

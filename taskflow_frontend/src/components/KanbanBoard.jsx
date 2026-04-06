@@ -10,9 +10,7 @@ import {
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
 
-const STATUSES = ['pending', 'in_progress', 'completed'];
-
-export default function KanbanBoard({ tasks, onEdit, onDelete, onMove }) {
+export default function KanbanBoard({ tasks, phases, onEdit, onDelete, onMove }) {
   const [activeTask, setActiveTask] = useState(null);
 
   const sensors = useSensors(
@@ -31,19 +29,22 @@ export default function KanbanBoard({ tasks, onEdit, onDelete, onMove }) {
     const task = tasks.find((t) => t.id === active.id);
     if (!task) return;
 
-    // over.id is either a column status or another task id
-    let targetStatus = STATUSES.includes(over.id)
-      ? over.id
-      : tasks.find((t) => t.id === over.id)?.status;
+    let targetPhaseId;
+    if (typeof over.id === 'string' && over.id.startsWith('phase-')) {
+      targetPhaseId = parseInt(over.id.replace('phase-', ''), 10);
+    } else {
+      const overTask = tasks.find((t) => t.id === over.id);
+      targetPhaseId = overTask?.phase?.id;
+    }
 
-    if (targetStatus && targetStatus !== task.status) {
-      onMove(task.id, targetStatus);
+    if (targetPhaseId && targetPhaseId !== task.phase?.id) {
+      onMove(task.id, targetPhaseId);
     }
   }
 
-  const columns = STATUSES.map((status) => ({
-    status,
-    tasks: tasks.filter((t) => t.status === status),
+  const columns = phases.map((phase) => ({
+    phase,
+    tasks: tasks.filter((t) => t.phase?.id === phase.id),
   }));
 
   return (
@@ -53,11 +54,11 @@ export default function KanbanBoard({ tasks, onEdit, onDelete, onMove }) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {columns.map(({ status, tasks: colTasks }) => (
+      <div className="flex gap-8 items-start overflow-x-auto pb-6">
+        {columns.map(({ phase, tasks: colTasks }) => (
           <KanbanColumn
-            key={status}
-            status={status}
+            key={phase.id}
+            phase={phase}
             tasks={colTasks}
             onEdit={onEdit}
             onDelete={onDelete}

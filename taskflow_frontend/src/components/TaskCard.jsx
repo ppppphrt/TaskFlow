@@ -1,23 +1,19 @@
-import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const STATUS_STYLES = {
-  pending: { badge: 'bg-rose-100 text-rose-700', label: 'Pending' },
-  in_progress: { badge: 'bg-amber-100 text-amber-700', label: 'In Progress' },
-  completed: { badge: 'bg-emerald-100 text-emerald-700', label: 'Completed' },
+const PRIORITY_BADGE = {
+  low:    'text-on-surface-variant bg-surface-container-low',
+  medium: 'text-on-secondary-fixed-variant bg-secondary-fixed',
+  high:   'text-on-error-container bg-error-container',
 };
 
-const PRIORITY_STYLES = {
-  low: { badge: 'bg-gray-100 text-gray-500', label: 'Low' },
-  medium: { badge: 'bg-amber-100 text-amber-600', label: 'Medium' },
-  high: { badge: 'bg-rose-100 text-rose-600', label: 'High' },
-};
+const PRIORITY_LABEL = { low: 'Low Priority', medium: 'Medium Priority', high: 'High Priority' };
 
 function formatDate(dateStr) {
   if (!dateStr) return null;
   const [year, month, day] = dateStr.split('-');
-  return `${day}/${month}/${year}`;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[parseInt(month,10)-1]} ${parseInt(day,10)}`;
 }
 
 function isOverdue(dateStr) {
@@ -37,74 +33,106 @@ export default function TaskCard({ task, onEdit, onDelete, draggable = false }) 
     opacity: isDragging ? 0.4 : 1,
   };
 
-  const statusStyle = STATUS_STYLES[task.status] || STATUS_STYLES.pending;
-  const priorityStyle = PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.medium;
-  const overdue = task.status !== 'completed' && isOverdue(task.due_date);
+  const isCompleted = task.phase?.is_terminal === true;
+  const overdue = !isCompleted && isOverdue(task.due_date);
+
+  if (isCompleted) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        className="bg-surface-container-lowest/60 p-6 rounded-xl border border-outline-variant/10 group relative opacity-80"
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div className="h-6" />
+          <span className="material-symbols-outlined text-tertiary text-lg">check_circle</span>
+        </div>
+        <h4 className="font-bold text-lg mb-4 leading-tight line-through opacity-40">
+          {task.title}
+        </h4>
+        <div className="flex items-center justify-between pt-4 border-t border-surface-container-low">
+          <span className="flex items-center gap-1 text-[11px] font-bold text-on-surface-variant opacity-40">
+            <span className="material-symbols-outlined text-sm">done_all</span>
+            Completed
+          </span>
+          <button
+            onClick={() => onEdit(task)}
+            className="p-1.5 hover:bg-surface-container-low rounded-lg text-on-surface-variant transition-colors opacity-0 group-hover:opacity-100"
+            title="Edit"
+          >
+            <span className="material-symbols-outlined text-sm">edit</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="relative bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up"
+      className="bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group relative border border-outline-variant/10"
     >
-      {draggable && (
-        <div
-          {...listeners}
-          className="absolute top-3 right-3 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition"
-          title="Drag to move"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/>
-            <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
-            <circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/>
-          </svg>
-        </div>
-      )}
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-base font-semibold text-gray-800 leading-tight">
-          {task.title}
-        </h3>
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap ${statusStyle.badge}`}>
-          {statusStyle.label}
+      <div className="flex items-start justify-between mb-4">
+        <div className="h-6" />
+        {draggable && (
+          <span
+            {...listeners}
+            className="material-symbols-outlined text-outline-variant opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity select-none"
+          >
+            drag_indicator
+          </span>
+        )}
+      </div>
+
+      <div className="mb-2">
+        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded inline-block ${PRIORITY_BADGE[task.priority] || PRIORITY_BADGE.medium}`}>
+          {PRIORITY_LABEL[task.priority] || 'Medium Priority'}
         </span>
       </div>
+
+      <h4 className="font-bold text-lg mb-2 leading-tight text-on-surface">{task.title}</h4>
 
       {task.description && (
-        <p className="text-sm text-gray-500 line-clamp-3">{task.description}</p>
+        <p className="text-on-surface-variant text-sm mb-4 line-clamp-2">{task.description}</p>
       )}
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${priorityStyle.badge}`}>
-          {priorityStyle.label} priority
-        </span>
-        {task.due_date && (
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-            overdue ? 'bg-rose-100 text-rose-600' : 'bg-gray-100 text-gray-500'
-          }`}>
-            {overdue ? '⚠ ' : ''}Due {formatDate(task.due_date)}
-          </span>
-        )}
-        {task.subtask_count > 0 && (
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
-            {task.completed_subtask_count}/{task.subtask_count} subtasks
-          </span>
-        )}
-      </div>
+      <div className="flex items-center justify-between pt-4 border-t border-surface-container-low">
+        <div className="flex items-center gap-3">
+          {task.due_date && (
+            <span className={`flex items-center gap-1 text-[11px] font-bold ${overdue ? 'text-error' : 'text-on-surface-variant opacity-60'}`}>
+              <span className="material-symbols-outlined text-sm">
+                {overdue ? 'warning' : 'calendar_today'}
+              </span>
+              {overdue ? 'Overdue' : formatDate(task.due_date)}
+            </span>
+          )}
+          {task.subtask_count > 0 && (
+            <span className="flex items-center gap-1 text-[11px] font-bold text-on-surface-variant">
+              <span className="material-symbols-outlined text-sm">account_tree</span>
+              {task.completed_subtask_count}/{task.subtask_count}
+            </span>
+          )}
+        </div>
 
-      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-gray-100">
-        <button
-          onClick={() => onEdit(task)}
-          className="flex-1 text-sm font-medium text-primary border border-primary rounded-md py-1.5 hover:bg-blue-50 transition"
-        >
-          Edit
-        </button>
-        <button
-          onClick={() => onDelete(task.id)}
-          className="flex-1 text-sm font-medium text-danger border border-danger rounded-md py-1.5 hover:bg-red-50 transition"
-        >
-          Delete
-        </button>
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => onEdit(task)}
+            className="p-1.5 hover:bg-surface-container-low rounded-lg text-on-surface-variant transition-colors"
+            title="Edit"
+          >
+            <span className="material-symbols-outlined text-sm">edit</span>
+          </button>
+          <button
+            onClick={() => onDelete(task.id)}
+            className="p-1.5 hover:bg-error-container hover:text-on-error-container rounded-lg text-on-surface-variant transition-colors"
+            title="Delete"
+          >
+            <span className="material-symbols-outlined text-sm">delete</span>
+          </button>
+        </div>
       </div>
     </div>
   );

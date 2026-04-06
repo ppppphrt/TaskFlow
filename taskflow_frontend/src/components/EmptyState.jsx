@@ -1,19 +1,26 @@
-import React from 'react';
-
-export default function EmptyState({ onCreateTask }) {
+export default function EmptyState({ onCreateTask, isFiltered = false }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="text-5xl mb-4">📋</div>
-      <h3 className="text-lg font-semibold text-gray-700 mb-2">No tasks yet</h3>
-      <p className="text-sm text-secondary mb-6 max-w-xs">
-        Your task list is empty. Start your day by adding a goal!
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <span className="material-symbols-outlined text-6xl text-on-surface-variant/20 mb-4">
+        {isFiltered ? 'search_off' : 'task_alt'}
+      </span>
+      <h3 className="text-lg font-black tracking-tight text-on-surface mb-2">
+        {isFiltered ? 'No tasks match this filter' : 'No tasks yet'}
+      </h3>
+      <p className="text-sm text-on-surface-variant/60 mb-8 max-w-xs">
+        {isFiltered
+          ? 'Try selecting a different filter to see your tasks.'
+          : 'Your task list is empty. Start your day by adding a goal!'}
       </p>
-      <button
-        onClick={onCreateTask}
-        className="bg-primary text-white text-sm font-medium px-6 py-2.5 rounded-lg hover:bg-blue-700 transition"
-      >
-        + Add Your First Task
-      </button>
+      {!isFiltered && (
+        <button
+          onClick={onCreateTask}
+          className="bg-gradient-to-r from-primary to-primary-container text-on-primary text-sm font-bold px-6 py-2.5 rounded-xl active:scale-95 transition-transform flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[18px]">add</span>
+          Add Your First Task
+        </button>
+      )}
     </div>
   );
 }

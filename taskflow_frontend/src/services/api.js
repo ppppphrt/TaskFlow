@@ -51,6 +51,12 @@ export const createTask = (data) => api.post('/api/tasks/', data);
 export const updateTask = (id, data) => api.patch(`/api/tasks/${id}/`, data);
 export const deleteTask = (id) => api.delete(`/api/tasks/${id}/`);
 
+// Phases
+export const fetchPhases = () => api.get('/api/phases/');
+export const createPhase = (data) => api.post('/api/phases/', data);
+export const updatePhase = (id, data) => api.patch(`/api/phases/${id}/`, data);
+export const deletePhase = (id) => api.delete(`/api/phases/${id}/`);
+
 // Subtasks
 export const fetchSubtasks = (taskId) => api.get(`/api/tasks/${taskId}/subtasks/`);
 export const createSubtask = (taskId, data) => api.post(`/api/tasks/${taskId}/subtasks/`, data);
