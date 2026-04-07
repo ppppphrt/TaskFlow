@@ -63,4 +63,10 @@ export const createSubtask = (taskId, data) => api.post(`/api/tasks/${taskId}/su
 export const updateSubtask = (subtaskId, data) => api.patch(`/api/subtasks/${subtaskId}/`, data);
 export const deleteSubtask = (subtaskId) => api.delete(`/api/subtasks/${subtaskId}/`);
 
+// Admin
+export const adminFetchUsers = () => api.get('/api/admin/users/');
+export const adminDeleteUser = (id) => api.delete(`/api/admin/users/${id}/`);
+export const adminFetchTasks = () => api.get('/api/admin/tasks/');
+export const adminDeleteTask = (id) => api.delete(`/api/admin/tasks/${id}/`);
+
 export default api;

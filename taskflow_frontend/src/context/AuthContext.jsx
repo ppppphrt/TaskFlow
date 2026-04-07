@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
     const access = localStorage.getItem('access_token');
     if (access) {
       const decoded = decodeJWT(access);
-      return decoded ? { username: decoded.username || decoded.user_id } : null;
+      return decoded ? { username: decoded.username || decoded.user_id, is_staff: decoded.is_staff || false } : null;
     }
     return null;
   });
@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('refresh_token', refresh);
     setTokens({ access, refresh });
     const decoded = decodeJWT(access);
-    setUser(decoded ? { username: decoded.username || String(decoded.user_id) } : null);
+    setUser(decoded ? { username: decoded.username || String(decoded.user_id), is_staff: decoded.is_staff || false } : null);
   }
 
   async function logout() {

@@ -11,6 +11,9 @@ from rest_framework_simplejwt.exceptions import TokenError
 from .models import Task, Subtask, Phase
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from django.contrib.auth.models import User
+from rest_framework.permissions import IsAdminUser
+
 from .serializers import (
     UserRegistrationSerializer,
     CustomTokenObtainPairSerializer,
@@ -19,6 +22,8 @@ from .serializers import (
     PhaseSerializer,
     UserProfileSerializer,
     ChangePasswordSerializer,
+    AdminUserSerializer,
+    AdminTaskSerializer,
 )
 
 
@@ -133,3 +138,31 @@ class SubtaskRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Subtask.objects.filter(task__owner=self.request.user)
+
+
+class AdminUserListView(generics.ListAPIView):
+    """Admin: list all registered users."""
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    queryset = User.objects.all().order_by('date_joined')
+
+
+class AdminUserDestroyView(generics.DestroyAPIView):
+    """Admin: delete a user account."""
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    queryset = User.objects.all()
+
+
+class AdminTaskListView(generics.ListAPIView):
+    """Admin: list all tasks across all users."""
+    serializer_class = AdminTaskSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    queryset = Task.objects.select_related('owner', 'phase').all()
+
+
+class AdminTaskDestroyView(generics.DestroyAPIView):
+    """Admin: delete any task."""
+    serializer_class = AdminTaskSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    queryset = Task.objects.all()

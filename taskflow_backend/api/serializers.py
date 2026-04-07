@@ -11,6 +11,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['username'] = user.username
+        token['is_staff'] = user.is_staff
         return token
 
 
@@ -102,3 +103,25 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError('Current password is incorrect.')
         return value
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    task_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'date_joined', 'task_count']
+        read_only_fields = ['id', 'date_joined']
+
+    def get_task_count(self, obj):
+        return obj.tasks.count()
+
+
+class AdminTaskSerializer(serializers.ModelSerializer):
+    owner_username = serializers.ReadOnlyField(source='owner.username')
+    phase = PhaseSerializer(read_only=True)
+
+    class Meta:
+        model = Task
+        fields = ['id', 'owner_username', 'title', 'description', 'phase', 'priority', 'due_date', 'created_at']
+        read_only_fields = ['id', 'created_at']

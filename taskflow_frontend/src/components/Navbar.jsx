@@ -27,6 +27,9 @@ export default function Navbar({ onAddTask }) {
             <div className="hidden md:flex gap-8 items-center text-sm">
               <NavLink to="/dashboard" className={navLinkClass}>Dashboard</NavLink>
               <NavLink to="/calendar" className={navLinkClass}>Calendar</NavLink>
+              {user.is_staff && (
+                <NavLink to="/admin" className={navLinkClass}>Admin</NavLink>
+              )}
             </div>
           )}
         </div>

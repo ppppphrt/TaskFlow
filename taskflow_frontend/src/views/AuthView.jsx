@@ -98,6 +98,20 @@ export default function AuthView({ mode }) {
             </>
           )}
         </p>
+
+        <div className="mt-4 flex items-center gap-3">
+          <div className="flex-1 h-px bg-outline-variant/20" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/40">or</span>
+          <div className="flex-1 h-px bg-outline-variant/20" />
+        </div>
+
+        <Link
+          to="/guest"
+          className="mt-4 flex items-center justify-center gap-2 w-full border border-outline-variant/40 text-on-surface-variant text-sm font-semibold py-2.5 rounded-xl hover:bg-surface-container-low transition-colors"
+        >
+          <span className="material-symbols-outlined text-[18px]">visibility</span>
+          Continue as Guest
+        </Link>
       </div>
     </div>
   );
