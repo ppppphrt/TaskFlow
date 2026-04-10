@@ -1,19 +1,26 @@
-"""Views for the TaskFlow API."""
+"""Views for the TaskFlow API.
 
+Views are responsible for:
+- HTTP request/response handling
+- Permission enforcement
+- Queryset construction (including annotations to avoid N+1 queries)
+- Calling service functions for business logic
+- Setting serializer context that requires request data
+"""
+
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-
-from .models import Task, Subtask, Phase
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from django.contrib.auth.models import User
-from rest_framework.permissions import IsAdminUser
 
+from .models import Task, Subtask, Phase
 from .serializers import (
     UserRegistrationSerializer,
     CustomTokenObtainPairSerializer,
@@ -25,17 +32,22 @@ from .serializers import (
     AdminUserSerializer,
     AdminTaskSerializer,
 )
+from .permissions import IsOwner
+from . import services
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
-from .permissions import IsOwner
 
 
 class RegisterView(generics.CreateAPIView):
-    """Register a new user."""
+    """Register a new user and create their default phases."""
     serializer_class = UserRegistrationSerializer
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        services.create_default_phases_for_user(user)
 
 
 class LogoutView(APIView):
@@ -63,15 +75,38 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 
 class ChangePasswordView(APIView):
-    """Change the authenticated user's password."""
+    """Change the authenticated user's password.
+
+    Old-password verification is performed here in the view via the service
+    layer so the serializer stays request-agnostic.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer = ChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        request.user.set_password(serializer.validated_data['new_password'])
-        request.user.save()
+
+        if not services.check_user_password(request.user, serializer.validated_data['old_password']):
+            return Response(
+                {'old_password': ['Current password is incorrect.']},
+                status=400,
+            )
+
+        services.change_user_password(request.user, serializer.validated_data['new_password'])
         return Response({'detail': 'Password changed successfully.'}, status=200)
+
+
+class _UserPhaseSerializerMixin:
+    """Restrict the phase_id field to phases owned by the requesting user.
+
+    Kept in the view layer so serializers remain request-agnostic.
+    """
+    def get_serializer(self, *args, **kwargs):
+        serializer = super().get_serializer(*args, **kwargs)
+        serializer.fields['phase_id'].queryset = Phase.objects.filter(
+            owner=self.request.user
+        )
+        return serializer
 
 
 class PhaseListCreateView(generics.ListCreateAPIView):
@@ -80,11 +115,15 @@ class PhaseListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Phase.objects.filter(owner=self.request.user)
+        return (
+            Phase.objects
+            .filter(owner=self.request.user)
+            .annotate(task_count=Count('tasks'))
+        )
 
     def perform_create(self, serializer):
-        max_order = Phase.objects.filter(owner=self.request.user).count()
-        serializer.save(owner=self.request.user, order=max_order)
+        order = services.get_next_phase_order(self.request.user)
+        serializer.save(owner=self.request.user, order=order)
 
 
 class PhaseRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -93,28 +132,46 @@ class PhaseRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsOwner]
 
     def get_queryset(self):
-        return Phase.objects.filter(owner=self.request.user)
+        return (
+            Phase.objects
+            .filter(owner=self.request.user)
+            .annotate(task_count=Count('tasks'))
+        )
 
 
-class TaskListCreateView(generics.ListCreateAPIView):
+def _task_queryset_with_counts(user):
+    """Return the base Task queryset for *user* with subtask counts annotated."""
+    return (
+        Task.objects
+        .filter(owner=user)
+        .annotate(
+            subtask_count=Count('subtasks'),
+            completed_subtask_count=Count(
+                'subtasks', filter=Q(subtasks__completed=True)
+            ),
+        )
+    )
+
+
+class TaskListCreateView(_UserPhaseSerializerMixin, generics.ListCreateAPIView):
     """List all tasks for the authenticated user or create a new task."""
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Task.objects.filter(owner=self.request.user)
+        return _task_queryset_with_counts(self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
 
-class TaskRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class TaskRetrieveUpdateDestroyView(_UserPhaseSerializerMixin, generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a task owned by the authenticated user."""
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated, IsOwner]
 
     def get_queryset(self):
-        return Task.objects.filter(owner=self.request.user)
+        return _task_queryset_with_counts(self.request.user)
 
 
 class SubtaskListCreateView(generics.ListCreateAPIView):
@@ -122,13 +179,14 @@ class SubtaskListCreateView(generics.ListCreateAPIView):
     serializer_class = SubtaskSerializer
     permission_classes = [IsAuthenticated]
 
+    def _get_task(self):
+        return get_object_or_404(Task, pk=self.kwargs['task_pk'], owner=self.request.user)
+
     def get_queryset(self):
-        task = get_object_or_404(Task, pk=self.kwargs['task_pk'], owner=self.request.user)
-        return task.subtasks.all()
+        return self._get_task().subtasks.all()
 
     def perform_create(self, serializer):
-        task = get_object_or_404(Task, pk=self.kwargs['task_pk'], owner=self.request.user)
-        serializer.save(task=task)
+        serializer.save(task=self._get_task())
 
 
 class SubtaskRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -144,7 +202,13 @@ class AdminUserListView(generics.ListAPIView):
     """Admin: list all registered users."""
     serializer_class = AdminUserSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
-    queryset = User.objects.all().order_by('date_joined')
+
+    def get_queryset(self):
+        return (
+            User.objects
+            .annotate(task_count=Count('tasks'))
+            .order_by('date_joined')
+        )
 
 
 class AdminUserDestroyView(generics.DestroyAPIView):
