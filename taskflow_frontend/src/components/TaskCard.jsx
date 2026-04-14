@@ -1,25 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-const PRIORITY_BADGE = {
-  low:    'text-on-surface-variant bg-surface-container-low',
-  medium: 'text-on-secondary-fixed-variant bg-secondary-fixed',
-  high:   'text-on-error-container bg-error-container',
-};
-
-const PRIORITY_LABEL = { low: 'Low Priority', medium: 'Medium Priority', high: 'High Priority' };
-
-function formatDate(dateStr) {
-  if (!dateStr) return null;
-  const [year, month, day] = dateStr.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[parseInt(month,10)-1]} ${parseInt(day,10)}`;
-}
-
-function isOverdue(dateStr) {
-  if (!dateStr) return false;
-  return new Date(dateStr) < new Date(new Date().toDateString());
-}
+import { PRIORITY_BADGE, PRIORITY_LABEL, formatDate, isOverdue } from '../utils/taskUtils';
 
 export default function TaskCard({ task, onEdit, onDelete, draggable = false }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -34,7 +15,7 @@ export default function TaskCard({ task, onEdit, onDelete, draggable = false }) 
   };
 
   const isCompleted = task.phase?.is_terminal === true;
-  const overdue = !isCompleted && isOverdue(task.due_date);
+  const overdue = isOverdue(task.due_date, isCompleted);
 
   if (isCompleted) {
     return (

@@ -2,32 +2,11 @@ import { useState } from 'react';
 import { useAdmin } from '../hooks/useAdmin.jsx';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-
-const PRIORITY_BADGE = {
-  low:    'bg-surface-container-low text-on-surface-variant',
-  medium: 'bg-secondary-fixed text-on-secondary-fixed-variant',
-  high:   'bg-error-container text-on-error-container',
-};
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-}
+import { PRIORITY_BADGE, formatDate } from '../utils/taskUtils';
 
 export default function AdminView() {
   const [tab, setTab] = useState('users');
-  const [search, setSearch] = useState('');
-  const { users, tasks, isLoading, removeUser, removeTask } = useAdmin();
-
-  const filteredUsers = users.filter((u) =>
-    u.username.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const filteredTasks = tasks.filter((t) =>
-    t.title.toLowerCase().includes(search.toLowerCase()) ||
-    t.owner_username.toLowerCase().includes(search.toLowerCase())
-  );
+  const { users, tasks, filteredUsers, filteredTasks, search, setSearch, isLoading, removeUser, removeTask } = useAdmin();
 
   return (
     <div className="min-h-screen bg-surface text-on-surface font-body flex flex-col">
@@ -129,7 +108,7 @@ export default function AdminView() {
                         {u.is_staff ? 'Admin' : 'User'}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-on-surface-variant/70 text-xs">{formatDate(u.date_joined)}</td>
+                    <td className="px-5 py-4 text-on-surface-variant/70 text-xs">{new Date(u.date_joined).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
                     <td className="px-5 py-4 text-on-surface-variant/70">{u.task_count}</td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
@@ -185,7 +164,7 @@ export default function AdminView() {
                         {t.priority}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-xs text-on-surface-variant/70">{formatDate(t.due_date)}</td>
+                    <td className="px-5 py-4 text-xs text-on-surface-variant/70">{formatDate(t.due_date) ?? '—'}</td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                         <button

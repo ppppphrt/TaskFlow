@@ -61,6 +61,9 @@ export default function Navbar({ onAddTask }) {
             </>
           ) : (
             <div className="flex items-center gap-4">
+              <Link to="/how-to-use" className="text-sm font-medium text-on-surface/60 hover:text-primary transition-colors">
+                How to use
+              </Link>
               <Link to="/login" className="text-sm font-medium text-on-surface/60 hover:text-primary transition-colors">
                 Login
               </Link>

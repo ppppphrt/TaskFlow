@@ -1,4 +1,10 @@
-"""Serializers for the TaskFlow API."""
+"""Serializers for the TaskFlow API.
+
+Serializers are responsible only for data shape and field-level format validation.
+- No request-object access (request-aware logic lives in views).
+- No cross-object DB queries (counts are pre-annotated by the view's queryset).
+- No business-rule validation (password checks live in services).
+"""
 
 from django.contrib.auth.models import User
 from rest_framework import serializers
@@ -33,15 +39,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 
 class PhaseSerializer(serializers.ModelSerializer):
-    task_count = serializers.SerializerMethodField()
+    # Populated by Count('tasks') annotation applied in the view's queryset.
+    task_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Phase
         fields = ['id', 'name', 'color', 'order', 'is_terminal', 'created_at', 'task_count']
         read_only_fields = ['id', 'created_at']
-
-    def get_task_count(self, obj):
-        return obj.tasks.count()
 
 
 class SubtaskSerializer(serializers.ModelSerializer):
@@ -62,8 +66,9 @@ class TaskSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
     subtasks = SubtaskSerializer(many=True, read_only=True)
-    subtask_count = serializers.SerializerMethodField()
-    completed_subtask_count = serializers.SerializerMethodField()
+    # Populated by annotations applied in the view's queryset.
+    subtask_count = serializers.IntegerField(read_only=True)
+    completed_subtask_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Task
@@ -74,18 +79,6 @@ class TaskSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and hasattr(request, 'user') and request.user.is_authenticated:
-            self.fields['phase_id'].queryset = Phase.objects.filter(owner=request.user)
-
-    def get_subtask_count(self, obj):
-        return obj.subtasks.count()
-
-    def get_completed_subtask_count(self, obj):
-        return obj.subtasks.filter(completed=True).count()
-
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -95,26 +88,23 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
+    """Validates only the shape/format of password change data.
+
+    Business-rule validation (checking the old password) is performed in the view
+    via the service layer, keeping the serializer request-agnostic.
+    """
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, min_length=8)
 
-    def validate_old_password(self, value):
-        user = self.context['request'].user
-        if not user.check_password(value):
-            raise serializers.ValidationError('Current password is incorrect.')
-        return value
-
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    task_count = serializers.SerializerMethodField()
+    # Populated by Count('tasks') annotation applied in the view's queryset.
+    task_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'date_joined', 'task_count']
         read_only_fields = ['id', 'date_joined']
-
-    def get_task_count(self, obj):
-        return obj.tasks.count()
 
 
 class AdminTaskSerializer(serializers.ModelSerializer):

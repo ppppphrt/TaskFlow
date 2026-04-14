@@ -13,6 +13,7 @@ import CalendarView from './views/CalendarView';
 import ProfileView from './views/ProfileView';
 import AdminView from './views/AdminView';
 import GuestView from './views/GuestView';
+import HowToUseView from './views/HowToUseView';
 import NotFoundView from './views/NotFoundView';
 
 export default function App() {
@@ -31,6 +32,7 @@ export default function App() {
 
           {/* Guest: always accessible */}
           <Route path="/guest" element={<GuestView />} />
+          <Route path="/how-to-use" element={<HowToUseView />} />
 
           {/* Private: must be logged in */}
           <Route element={<PrivateRoute />}>

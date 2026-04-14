@@ -2,15 +2,6 @@
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-
-DEFAULT_PHASES = [
-    {'name': 'Pending',     'color': '#ba1a1a', 'order': 0, 'is_terminal': False},
-    {'name': 'In Progress', 'color': '#515f74', 'order': 1, 'is_terminal': False},
-    {'name': 'Completed',   'color': '#005237', 'order': 2, 'is_terminal': True},
-]
 
 
 class Phase(models.Model):
@@ -62,10 +53,3 @@ class Subtask(models.Model):
 
     def __str__(self):
         return self.title
-
-
-@receiver(post_save, sender=User)
-def create_default_phases(sender, instance, created, **kwargs):
-    if created:
-        for p in DEFAULT_PHASES:
-            Phase.objects.create(owner=instance, **p)

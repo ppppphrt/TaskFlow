@@ -6,6 +6,23 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config, Csv
 
+
+def parse_bool(value: str, default: bool = False) -> bool:
+    """
+    Lenient boolean parser so unexpected env values don't crash the app.
+    Recognises common truthy/falsey words; falls back to default.
+    """
+    truthy = {'true', '1', 't', 'yes', 'y', 'on', 'debug', 'dev'}
+    falsey = {'false', '0', 'f', 'no', 'n', 'off', 'release', 'prod', 'production'}
+    if value is None:
+        return default
+    value_str = str(value).strip().lower()
+    if value_str in truthy:
+        return True
+    if value_str in falsey:
+        return False
+    return default
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -13,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = parse_bool(config('DEBUG', default='True'), default=True)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 

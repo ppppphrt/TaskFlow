@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { adminFetchUsers, adminDeleteUser, adminFetchTasks, adminDeleteTask } from '../services/api';
+import { showConfirmToast } from '../utils/confirmToast';
 
 export function useAdmin() {
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => { load(); }, []);
@@ -22,37 +24,22 @@ export function useAdmin() {
     }
   }
 
-  async function removeUser(id) {
-    const toastId = toast(
-      <div>
-        <p className="text-sm font-medium text-gray-800 mb-2">Delete this user and all their data?</p>
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              toast.dismiss(toastId);
-              try {
-                await adminDeleteUser(id);
-                setUsers((prev) => prev.filter((u) => u.id !== id));
-                setTasks((prev) => prev.filter((t) => t.owner_id !== id));
-                toast.success('User deleted.');
-              } catch {
-                toast.error('Failed to delete user.');
-              }
-            }}
-            className="bg-red-600 text-white text-xs font-medium px-3 py-1 rounded"
-          >
-            Delete
-          </button>
-          <button
-            onClick={() => toast.dismiss(toastId)}
-            className="bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1 rounded"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>,
-      { autoClose: false, closeButton: false }
-    );
+  async function _doDeleteUser(id) {
+    try {
+      await adminDeleteUser(id);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+      setTasks((prev) => prev.filter((t) => t.owner_id !== id));
+      toast.success('User deleted.');
+    } catch {
+      toast.error('Failed to delete user.');
+    }
+  }
+
+  function removeUser(id) {
+    showConfirmToast({
+      message: 'Delete this user and all their data?',
+      onConfirm: () => _doDeleteUser(id),
+    });
   }
 
   async function removeTask(id) {
@@ -65,5 +52,17 @@ export function useAdmin() {
     }
   }
 
-  return { users, tasks, isLoading, removeUser, removeTask };
+  const q = search.toLowerCase();
+  const filteredUsers = users.filter(
+    (u) =>
+      u.username.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q),
+  );
+  const filteredTasks = tasks.filter(
+    (t) =>
+      t.title.toLowerCase().includes(q) ||
+      t.owner_username.toLowerCase().includes(q),
+  );
+
+  return { users, tasks, filteredUsers, filteredTasks, search, setSearch, isLoading, removeUser, removeTask };
 }

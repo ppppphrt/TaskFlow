@@ -1,20 +1,4 @@
-const PRIORITY_STYLES = {
-  low:    { badge: 'bg-surface-container-low text-on-surface-variant', label: 'Low' },
-  medium: { badge: 'bg-secondary-fixed text-on-secondary-fixed-variant', label: 'Medium' },
-  high:   { badge: 'bg-error-container text-on-error-container',        label: 'High' },
-};
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  const [, month, day] = dateStr.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[parseInt(month,10)-1]} ${parseInt(day,10)}`;
-}
-
-function isOverdue(dateStr, isTerminal) {
-  if (!dateStr || isTerminal) return false;
-  return new Date(dateStr) < new Date(new Date().toDateString());
-}
+import { PRIORITY_STYLES, formatDate, isOverdue } from '../utils/taskUtils';
 
 export default function ListView({ tasks, onEdit, onDelete }) {
   if (tasks.length === 0) {
@@ -77,7 +61,7 @@ export default function ListView({ tasks, onEdit, onDelete }) {
                 <td className="px-5 py-4">
                   <span className={`flex items-center gap-1 text-xs font-semibold ${overdue ? 'text-error' : 'text-on-surface-variant/60'}`}>
                     {overdue && <span className="material-symbols-outlined text-sm">warning</span>}
-                    {formatDate(task.due_date)}
+                    {formatDate(task.due_date) ?? '—'}
                   </span>
                 </td>
                 <td className="px-5 py-4">

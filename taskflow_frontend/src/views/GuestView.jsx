@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Footer from '../components/Footer';
+import { formatDate } from '../utils/taskUtils';
 
 const DEMO_PHASES = [
   { id: 1, name: 'Pending',     color: '#ba1a1a', is_terminal: false },
@@ -53,13 +54,6 @@ const PRIORITY_BADGE = {
   high:   'bg-error-container text-on-error-container',
 };
 
-function formatDate(dateStr) {
-  if (!dateStr) return null;
-  const [, month, day] = dateStr.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[parseInt(month,10)-1]} ${parseInt(day,10)}`;
-}
-
 function DemoCard({ task }) {
   const isCompleted = task.phase?.is_terminal;
   return (
@@ -108,6 +102,12 @@ export default function GuestView() {
         <div className="flex justify-between items-center w-full px-8 py-4 max-w-[1440px] mx-auto">
           <span className="text-2xl font-black text-on-surface tracking-tighter">TaskFlow</span>
           <div className="flex items-center gap-4">
+            <Link
+              to="/how-to-use"
+              className="text-sm font-medium text-on-surface/60 hover:text-primary transition-colors"
+            >
+              How to use
+            </Link>
             <Link
               to="/login"
               className="text-sm font-medium text-on-surface/60 hover:text-primary transition-colors"

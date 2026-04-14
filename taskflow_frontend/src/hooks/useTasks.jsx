@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { fetchTasks, createTask, updateTask, deleteTask } from '../services/api';
-
-const PRIORITY_RANK = { high: 3, medium: 2, low: 1 };
+import { PRIORITY_RANK } from '../utils/taskUtils';
+import { showConfirmToast } from '../utils/confirmToast';
 
 export function useTasks() {
   const [tasks, setTasks] = useState([]);
@@ -49,8 +49,6 @@ export function useTasks() {
     setTasks((prev) =>
       prev.map((t) => {
         if (t.id !== id) return t;
-        // optimistic: find the phase object from current tasks' phase data isn't available
-        // so we just update phase.id — the server will return full phase on next load
         return { ...t, phase: t.phase ? { ...t.phase, id: phaseId } : { id: phaseId } };
       })
     );
@@ -63,39 +61,23 @@ export function useTasks() {
     }
   }
 
-  function removeTask(id) {
-    const toastId = toast(
-      <div>
-        <p className="text-sm font-medium text-gray-800 mb-2">Delete this task?</p>
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              toast.dismiss(toastId);
-              try {
-                await deleteTask(id);
-                setTasks((prev) => prev.filter((t) => t.id !== id));
-                toast.success('Task deleted.');
-              } catch {
-                toast.error('Failed to delete task.');
-              }
-            }}
-            className="bg-danger text-white text-xs font-medium px-3 py-1 rounded"
-          >
-            Delete
-          </button>
-          <button
-            onClick={() => toast.dismiss(toastId)}
-            className="bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1 rounded"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>,
-      { autoClose: false, closeButton: false }
-    );
+  async function _doDelete(id) {
+    try {
+      await deleteTask(id);
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+      toast.success('Task deleted.');
+    } catch {
+      toast.error('Failed to delete task.');
+    }
   }
 
-  // filter === 'all' or a phase id (number)
+  function removeTask(id) {
+    showConfirmToast({
+      message: 'Delete this task?',
+      onConfirm: () => _doDelete(id),
+    });
+  }
+
   const filtered = filter === 'all' ? tasks : tasks.filter((t) => t.phase?.id === filter);
 
   const filteredTasks = [...filtered].sort((a, b) => {
@@ -118,7 +100,6 @@ export function useTasks() {
     return sortOrder === 'asc' ? valA - valB : valB - valA;
   });
 
-  // taskCounts keyed by phase.id
   const taskCounts = tasks.reduce((acc, t) => {
     if (t.phase?.id) {
       acc[t.phase.id] = (acc[t.phase.id] || 0) + 1;
