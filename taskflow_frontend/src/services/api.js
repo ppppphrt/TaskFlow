@@ -20,10 +20,12 @@ api.interceptors.request.use(
 );
 
 // Response interceptor: handle 401
+// Skip redirect for the login endpoint — let useAuthForm handle that error itself
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    const isLoginRequest = error.config?.url?.includes('/api/auth/login/');
+    if (error.response && error.response.status === 401 && !isLoginRequest) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       window.location.href = '/login';

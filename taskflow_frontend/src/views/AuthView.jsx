@@ -4,7 +4,7 @@ import { useAuthForm } from '../hooks/useAuthForm';
 
 export default function AuthView({ mode }) {
   const isLogin = mode === 'login';
-  const { form, isLoading, handleChange, handleSubmit } = useAuthForm(mode);
+  const { form, isLoading, error, handleChange, handleSubmit } = useAuthForm(mode);
   const [showPassword, setShowPassword] = useState(false);
 
   const fieldClass = 'w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40 transition';
@@ -77,6 +77,13 @@ export default function AuthView({ mode }) {
               </button>
             </div>
           </div>
+
+          {error && (
+            <div className="flex items-center gap-2 bg-error-container text-on-error-container text-sm font-medium px-4 py-3 rounded-xl">
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"

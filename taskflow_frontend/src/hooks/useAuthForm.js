@@ -11,8 +11,10 @@ export function useAuthForm(mode) {
 
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   function handleChange(e) {
+    setError('');
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
@@ -30,18 +32,25 @@ export function useAuthForm(mode) {
         navigate('/login');
       }
     } catch (err) {
+      const status = err.response?.status;
       const data = err.response?.data;
       let message = 'Something went wrong. Please try again.';
-      if (data) {
+      if (isLogin && (status === 400 || status === 401)) {
+        message = 'Wrong username or password.';
+      } else if (data) {
         const firstKey = Object.keys(data)[0];
         const firstVal = data[firstKey];
         message = Array.isArray(firstVal) ? firstVal[0] : String(firstVal);
       }
-      toast.error(message);
+      if (isLogin) {
+        setError(message);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsLoading(false);
     }
   }
 
-  return { form, isLoading, handleChange, handleSubmit };
+  return { form, isLoading, error, handleChange, handleSubmit };
 }

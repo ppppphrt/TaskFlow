@@ -103,7 +103,8 @@ class _UserPhaseSerializerMixin:
     """
     def get_serializer(self, *args, **kwargs):
         serializer = super().get_serializer(*args, **kwargs)
-        serializer.fields['phase_id'].queryset = Phase.objects.filter(
+        target = serializer.child if hasattr(serializer, 'child') else serializer
+        target.fields['phase_id'].queryset = Phase.objects.filter(
             owner=self.request.user
         )
         return serializer
